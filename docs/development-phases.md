@@ -40,16 +40,16 @@ Status key: [x] = complete, [ ] = not started
 ## Phase 2: Commission Calculator
 > Real-time commission calculation engine with admin-configurable tiers.
 
-- [ ] Admin: Commission Settings UI (edit tiers, thresholds, multipliers)
-- [ ] Commission calculation engine/service
-  - [ ] Gross margin tier lookup
-  - [ ] Base commission calculation
-  - [ ] Surplus bonus calculation (above target GM)
-  - [ ] Fast close bonus ($250 for deals closed in < 3 days)
-  - [ ] Floor protection ($750 minimum at 35% GM)
-- [ ] Real-time commission calculator page (input contract value + GM %, see breakdown)
-- [ ] Commission payout record creation (linked to deals)
-- [ ] Settings snapshot capture on payout
+- [x] Admin: Commission Settings UI (edit tiers, thresholds, multipliers)
+- [x] Commission calculation engine/service
+  - [x] Gross margin tier lookup
+  - [x] Base commission calculation
+  - [x] Surplus bonus calculation (above target GM)
+  - [x] Fast close bonus ($250 for deals closed in < 3 days)
+  - [x] Floor protection ($750 minimum at 35% GM)
+- [x] Real-time commission calculator page (input contract value + GM %, see breakdown)
+- [x] Commission payout record creation (linked to deals)
+- [x] Settings snapshot capture on payout
 
 ---
 
