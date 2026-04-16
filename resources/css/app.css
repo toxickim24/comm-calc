@@ -1,0 +1,41 @@
+@import 'tailwindcss';
+@import 'notyf/notyf.min.css';
+
+@source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';
+@source '../../storage/framework/views/*.php';
+@source '../**/*.blade.php';
+@source '../**/*.js';
+
+@theme {
+    --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+        'Segoe UI Symbol', 'Noto Color Emoji';
+
+    /* Brand Colors — matched to Bayside Pavers logo greens */
+    --color-brand-50: #f0f7ee;
+    --color-brand-100: #dcefd6;
+    --color-brand-200: #b9dfad;
+    --color-brand-300: #8ec97e;
+    --color-brand-400: #6bb359;
+    --color-brand-500: #5b8c51;
+    --color-brand-600: #4a7342;
+    --color-brand-700: #3d5e37;
+    --color-brand-800: #334d2f;
+    --color-brand-900: #2b4028;
+    --color-brand-950: #152314;
+
+    /* Accent — the bright leaf green from the logo */
+    --color-accent-400: #8dc63f;
+    --color-accent-500: #7baf35;
+    --color-accent-600: #699a2d;
+
+    /* Sidebar */
+    --color-sidebar: #1a1f2b;
+    --color-sidebar-hover: #252b3a;
+    --color-sidebar-active: #4a7342;
+}
+
+/* Custom scrollbar */
+@utility scrollbar-thin {
+    scrollbar-width: thin;
+    scrollbar-color: var(--color-brand-300) transparent;
+}

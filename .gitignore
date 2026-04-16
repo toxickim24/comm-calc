@@ -1,0 +1,52 @@
+# Laravel
+/vendor
+/node_modules
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/pail
+/storage/framework/cache/data/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/storage/logs/*
+bootstrap/cache/*.php
+
+# Environment
+.env
+.env.*
+!.env.example
+
+# IDE
+/.vscode
+/.idea
+/.cursor
+/.nova
+/.zed
+/.phpactor.json
+_ide_helper.php
+auth.json
+
+# AI / Agent
+/.claude
+
+# Testing
+.phpunit.result.cache
+/.phpunit.cache
+/coverage
+
+# OS
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log
+yarn-error.log
+
+# Misc
+Homestead.json
+Homestead.yaml
