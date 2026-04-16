@@ -50,3 +50,6 @@ yarn-error.log
 # Misc
 Homestead.json
 Homestead.yaml
+
+.builds/
+.htaccess
