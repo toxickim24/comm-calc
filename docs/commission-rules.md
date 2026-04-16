@@ -6,17 +6,16 @@ All commission parameters are stored in the `commission_settings` table and are 
 
 Commission rates are determined by the deal's **estimated gross margin percentage (GM %)**:
 
-| GM % Range | Tier | Commission Rate |
-|-----------|------|-----------------|
-| Below 35% | Below Floor | 0% (no commission) |
-| 35% | Floor | 3% ($750 minimum protection) |
-| 36-37% | Tier 1 | 4% |
-| 38-39% | Tier 2 | 5% |
-| 40-41% | Tier 3 | 6% |
-| 42-43% | Tier 4 | 7% |
-| 44-45% | Tier 5 | 8% |
-| 46% | Tier 6 | 9% |
-| 47%+ | Target+ | 10% |
+| GM % Range | Commission Rate |
+|-----------|-----------------|
+| Below 35% | 0% (no commission) |
+| Exactly 35% | MAX($750, 0.5% of Sold Contract Value) |
+| 35.1% – 37.9% | 3% |
+| 38.0% – 40.9% | 5% |
+| 41.0% – 43.9% | 7% |
+| 44.0% – 46.9% | 9% |
+| Exactly 47.0% | 10% |
+| Above 47.0% | 10% base + surplus bonus |
 
 ## Calculation Components
 
@@ -26,17 +25,22 @@ Base Commission = Sold Contract Value x Tier Commission Rate
 ```
 
 ### Floor Protection
-If a deal is at exactly 35% GM, the rep receives a **minimum $750 commission** regardless of the calculated amount.
+If a deal is at exactly 35% GM, the rep receives **MAX($750, 0.5% of Sold Contract Value)** — whichever is greater.
 
 ### Surplus Bonus
-For deals above the **target GM (47%)**, reps earn an additional bonus on the surplus:
+For deals **above** 47.0% GM (not at exactly 47%), reps earn an additional bonus:
 ```
-Surplus = GM% - Target GM%
-Surplus Bonus = Sold Contract Value x Surplus% x Surplus Multiplier (0.5)
+Surplus Bonus = 0.5 x ((Estimated GM% - 47%) x Sold Contract Value)
 ```
 
 ### Fast Close Bonus
-Deals closed within **3 days or fewer** from appointment to contract signing earn a flat **$250 bonus**.
+Fast close is **auto-calculated only** from deal dates:
+- Deal status must be **Closed Won**
+- Days to Close = Contract Signed Date - Appointment Date
+- If Days to Close <= 3, the deal qualifies as a fast close
+- Fast close bonus = flat **$250**
+
+Users cannot manually toggle fast close. It is determined entirely by the deal dates.
 
 ## Total Commission Formula
 
@@ -50,14 +54,13 @@ Total Payout = Base Commission + Surplus Bonus + Fast Close Bonus
 |-----|--------------|-------------|
 | `min_gm_percent` | 35 | Floor GM% (below = no commission) |
 | `target_gm_percent` | 47 | Target GM% (above = surplus bonus) |
-| `floor_commission` | 750 | Minimum commission at floor GM% |
-| `tier_1_rate` | 0.04 | Commission rate for 36-37% GM |
-| `tier_2_rate` | 0.05 | Commission rate for 38-39% GM |
-| `tier_3_rate` | 0.06 | Commission rate for 40-41% GM |
-| `tier_4_rate` | 0.07 | Commission rate for 42-43% GM |
-| `tier_5_rate` | 0.08 | Commission rate for 44-45% GM |
-| `tier_6_rate` | 0.09 | Commission rate for 46% GM |
-| `target_rate` | 0.10 | Commission rate at 47%+ GM |
+| `floor_min_amount` | 750 | Minimum commission at floor GM% |
+| `floor_percent` | 0.5 | Percentage of sold value at floor GM% |
+| `tier_35_1_37_9_rate` | 3 | Commission rate for 35.1%–37.9% GM |
+| `tier_38_40_9_rate` | 5 | Commission rate for 38%–40.9% GM |
+| `tier_41_43_9_rate` | 7 | Commission rate for 41%–43.9% GM |
+| `tier_44_46_9_rate` | 9 | Commission rate for 44%–46.9% GM |
+| `tier_47_rate` | 10 | Commission rate at 47%+ GM |
 | `surplus_multiplier` | 0.5 | Multiplier applied to surplus above target |
 | `fast_close_days` | 3 | Max days for fast close qualification |
 | `fast_close_spiff` | 250 | Flat bonus for fast close deals |

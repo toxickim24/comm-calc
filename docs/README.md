@@ -13,3 +13,5 @@ All project documentation lives in this `docs/` folder.
 | [User Roles & Permissions](user-roles.md) | Role definitions and access control matrix |
 | [Commission Rules](commission-rules.md) | Commission tier structure and calculation logic |
 | [SPIFF Rules](spiff-rules.md) | Monthly SPIFF bonus structure and eligibility |
+| [Deployment Guide](deployment.md) | Production server setup and deployment steps |
+| [User Guide](user-guide.md) | How to use the app (reps, managers, admins) |

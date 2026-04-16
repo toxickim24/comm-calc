@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Models\AuditLog;
+use App\Models\MonthlySnapshot;
 use App\Models\SpiffPayout;
 use App\Models\SpiffSetting;
 use App\Services\SpiffCalculatorService;
@@ -45,9 +46,15 @@ class MonthlySpiff extends Component
 
     public function calculate(): void
     {
+        $monthDate = $this->selectedMonth . '-01';
+
+        if (MonthlySnapshot::isMonthLocked($monthDate)) {
+            $this->dispatch('toast', type: 'error', message: 'This month is locked. SPIFFs cannot be recalculated.');
+            return;
+        }
+
         $service = new SpiffCalculatorService();
         $results = $service->calculateMonth($this->selectedMonth);
-        $monthDate = $this->selectedMonth . '-01';
 
         foreach ($results as $userId => $data) {
             // Don't overwrite manual overrides

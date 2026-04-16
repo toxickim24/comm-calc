@@ -2,7 +2,7 @@
 
 ## Prerequisites
 
-- **PHP 8.3+** with extensions: BCMath, Ctype, Fileinfo, JSON, Mbstring, OpenSSL, PDO, Tokenizer, XML
+- **PHP 8.4+** with extensions: BCMath, Ctype, Fileinfo, JSON, Mbstring, OpenSSL, PDO, Tokenizer, XML
 - **Composer** (PHP dependency manager)
 - **Node.js 18+** and **npm**
 - **MySQL** (via WAMP, XAMPP, or standalone)
@@ -62,6 +62,14 @@ This creates all tables and seeds them with:
 - SPIFF settings (9 incentive parameters)
 - Default branding (Bayside Pavers)
 
+### 5b. Load Demo Data (Optional)
+
+To populate the system with realistic deals, commissions, weekly scores, and SPIFF payouts:
+
+```bash
+php artisan db:seed --class=DemoDataSeeder
+```
+
 ### 6. Create Storage Symlink
 
 ```bash
@@ -99,6 +107,7 @@ The app will be available at **http://localhost:8000** (or via WAMP at http://lo
 |---------|-------------|
 | `php artisan migrate` | Run pending migrations |
 | `php artisan migrate:fresh --seed` | Reset database and re-seed |
+| `php artisan db:seed --class=DemoDataSeeder` | Load demo deals, commissions, SPIFFs |
 | `php artisan make:livewire ComponentName` | Create a new Livewire component |
 | `npm run dev` | Start Vite dev server (hot reload) |
 | `npm run build` | Build production assets |

@@ -48,7 +48,7 @@ Sales pipeline records linked to a user.
 | user_id | FK -> users | Cascade on delete |
 | month | string | Format: YYYY-MM |
 | client_name | string | |
-| appointment_date | date | Nullable |
+| appointment_date | date | Required |
 | contract_signed_date | date | Nullable |
 | deposit_date | date | Nullable |
 | original_contract_price | decimal(12,2) | Nullable |

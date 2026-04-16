@@ -44,7 +44,7 @@ class SpiffSettingSeeder extends Seeder
                 'key' => 'target_min_appts',
                 'value' => 12.0000,
                 'label' => 'Target Min Appointments',
-                'description' => 'Minimum appointments required for target bonus',
+                'description' => 'Minimum appointments required for both 20% and 30% target bonuses',
             ],
             [
                 'key' => 'fast_close_per_deal',

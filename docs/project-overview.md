@@ -22,7 +22,7 @@ The **Bayside Pavers Commission Calculator** is an internal web application used
 
 | Layer | Technology |
 |-------|-----------|
-| **Backend** | Laravel 13.0 (PHP 8.3+) |
+| **Backend** | Laravel 13.0 (PHP 8.4+) |
 | **Frontend** | Livewire 4.2 + Tailwind CSS 4.0 |
 | **Database** | MySQL (`comm-calc` database on local WAMP) |
 | **Build Tool** | Vite 8.0 |
@@ -38,3 +38,12 @@ The **Bayside Pavers Commission Calculator** is an internal web application used
 - **Monthly snapshot locking** -- At month-end, settings are frozen into snapshots so historical calculations remain accurate.
 - **Polymorphic audit logging** -- All changes to users, settings, and deals are tracked with old/new values and IP addresses.
 - **Soft deletes** -- Users and deals are soft-deleted to preserve historical records.
+- **Auto-calculated fast close** -- Fast close is determined solely from deal dates (Contract Signed - Appointment <= 3 days). It cannot be manually toggled.
+- **Weekly scoreboard with manual editing** -- Scores are auto-derived from deal data with recalculate support. Admins/managers can also click-to-edit individual fields, with all changes audit-logged.
+- **Closed Won safeguards** -- Changing a deal to Closed Won requires a confirmation modal and both appointment and contract signed dates. Prevents accidental commission payouts.
+- **Pre-lock month checklist** -- Before locking a month, admins see a checklist of open deals, missing dates, and uncalculated SPIFFs. Must acknowledge before locking.
+- **Month lock enforcement** -- Locked months block deal creation, editing, deletion, status changes, and SPIFF recalculation.
+- **In-app notifications** -- Notification bell in the top bar showing recent audit activity.
+- **Deal comparison calculator** -- Side-by-side "what if" scenario comparison showing the commission delta.
+- **Per-rep commission PDF** -- Individual rep commission statements with SPIFF breakdown for payroll distribution.
+- **Year-to-date summary** -- Dashboard table showing cumulative commission + SPIFF totals per rep for the current year.

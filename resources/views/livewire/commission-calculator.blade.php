@@ -34,23 +34,51 @@
                         </div>
                     </div>
 
-                    {{-- Fast Close Toggle --}}
-                    <div class="flex items-center gap-3 rounded-lg border border-gray-200 p-3">
-                        <input wire:model.live="is_fast_close"
-                               type="checkbox" id="fast_close"
-                               class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500">
-                        <label for="fast_close" class="text-sm text-gray-700">
-                            <span class="font-medium">Fast Close</span>
-                            <span class="text-gray-500">— Deal closed within {{ \App\Models\CommissionSetting::getValue('fast_close_days', 3) }} days</span>
-                        </label>
+                    {{-- Fast Close Note --}}
+                    <div class="rounded-lg bg-gray-50 p-3 text-xs text-gray-500">
+                        <strong>Note:</strong> Fast close bonus ($250) is auto-applied when a deal is closed within {{ \App\Models\CommissionSetting::getValue('fast_close_days', 3) }} days. It cannot be toggled manually — it is determined from the deal's appointment and contract signed dates.
                     </div>
 
-                    {{-- Clear Button --}}
-                    <button wire:click="clear"
-                            type="button"
-                            class="text-sm font-medium text-gray-500 transition hover:text-gray-700">
-                        Clear inputs
-                    </button>
+                    {{-- Actions --}}
+                    <div class="flex items-center gap-4">
+                        <button wire:click="clear"
+                                type="button"
+                                class="text-sm font-medium text-gray-500 transition hover:text-gray-700">
+                            Clear
+                        </button>
+                        <button wire:click="toggleCompare"
+                                type="button"
+                                class="text-sm font-medium {{ $compareMode ? 'text-brand-600' : 'text-gray-500' }} transition hover:text-brand-700">
+                            {{ $compareMode ? 'Close Compare' : 'Compare Scenarios' }}
+                        </button>
+                    </div>
+
+                    {{-- Scenario B inputs (compare mode) --}}
+                    @if($compareMode)
+                    <div class="rounded-lg border-2 border-dashed border-brand-200 bg-brand-50/30 p-4 space-y-3">
+                        <p class="text-xs font-semibold uppercase tracking-wider text-brand-600">Scenario B — What If?</p>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Contract Value</label>
+                            <div class="relative mt-1">
+                                <span class="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">$</span>
+                                <input wire:model.live.debounce.300ms="contract_value_b"
+                                       type="number" step="0.01" min="0"
+                                       placeholder="Same as above"
+                                       class="block w-full rounded-lg border border-gray-300 py-2 pl-7 pr-4 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none">
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700">Gross Margin</label>
+                            <div class="relative mt-1">
+                                <input wire:model.live.debounce.300ms="gm_percent_b"
+                                       type="number" step="0.1" min="0" max="100"
+                                       placeholder="e.g. 45"
+                                       class="block w-full rounded-lg border border-gray-300 px-4 py-2 pr-8 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none">
+                                <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">%</span>
+                            </div>
+                        </div>
+                    </div>
+                    @endif
                 </div>
             </div>
 
@@ -137,18 +165,6 @@
                             </dd>
                         </div>
 
-                        {{-- Fast Close Bonus --}}
-                        <div class="flex items-center justify-between">
-                            <dt class="text-sm text-gray-600">Fast Close Bonus</dt>
-                            <dd class="text-sm font-medium {{ $result['fast_close_bonus'] > 0 ? 'text-green-600' : 'text-gray-400' }}">
-                                @if($result['fast_close_bonus'] > 0)
-                                    +${{ number_format($result['fast_close_bonus'], 2) }}
-                                @else
-                                    $0.00
-                                @endif
-                            </dd>
-                        </div>
-
                         <div class="my-3 border-t border-gray-200"></div>
 
                         {{-- Total --}}
@@ -177,6 +193,53 @@
             <div class="rounded-xl border-2 border-dashed border-gray-300 p-12 text-center">
                 <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 7h6m0 10v-3m-3 3h.01M9 17h.01M9 14h.01M12 14h.01M15 11h.01M12 11h.01M9 11h.01M7 21h10a2 2 0 002-2V5a2 2 0 00-2-2H7a2 2 0 00-2 2v14a2 2 0 002 2z"/></svg>
                 <p class="mt-2 text-sm font-medium text-gray-500">Enter contract value and gross margin to see commission breakdown</p>
+            </div>
+            @endif
+
+            {{-- Comparison Result (Scenario B) --}}
+            @if($compareMode && $result_b)
+            <div class="mt-4 rounded-xl bg-white shadow-sm ring-1 ring-brand-200">
+                <div class="rounded-t-xl bg-brand-500 px-6 py-4 text-center">
+                    <p class="text-xs font-medium text-brand-100">Scenario B</p>
+                    <p class="mt-1 text-2xl font-bold text-white">${{ number_format($result_b['total_payout'], 2) }}</p>
+                </div>
+                <div class="p-5">
+                    <dl class="space-y-2 text-sm">
+                        <div class="flex justify-between">
+                            <dt class="text-gray-600">Contract</dt>
+                            <dd class="font-medium text-gray-900">${{ number_format($result_b['contract_value'], 2) }}</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-600">GM</dt>
+                            <dd class="font-medium text-gray-900">{{ number_format($result_b['gm_percent'], 1) }}%</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-600">Tier</dt>
+                            <dd class="text-xs font-semibold text-brand-700">{{ $result_b['tier'] }} ({{ number_format($result_b['tier_rate'], 1) }}%)</dd>
+                        </div>
+                        <div class="flex justify-between">
+                            <dt class="text-gray-600">Base</dt>
+                            <dd class="font-medium">${{ number_format($result_b['base_commission'], 2) }}</dd>
+                        </div>
+                        @if($result_b['surplus_bonus'] > 0)
+                        <div class="flex justify-between">
+                            <dt class="text-gray-600">Surplus</dt>
+                            <dd class="font-medium text-green-600">+${{ number_format($result_b['surplus_bonus'], 2) }}</dd>
+                        </div>
+                        @endif
+                    </dl>
+
+                    {{-- Comparison delta --}}
+                    @if($result)
+                    @php $delta = $result_b['total_payout'] - $result['total_payout']; @endphp
+                    <div class="mt-3 rounded-lg {{ $delta > 0 ? 'bg-green-50' : ($delta < 0 ? 'bg-red-50' : 'bg-gray-50') }} p-3 text-center">
+                        <p class="text-xs text-gray-500">Difference from Scenario A</p>
+                        <p class="text-lg font-bold {{ $delta > 0 ? 'text-green-600' : ($delta < 0 ? 'text-red-600' : 'text-gray-500') }}">
+                            {{ $delta >= 0 ? '+' : '' }}${{ number_format($delta, 2) }}
+                        </p>
+                    </div>
+                    @endif
+                </div>
             </div>
             @endif
         </div>

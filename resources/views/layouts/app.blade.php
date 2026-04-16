@@ -124,6 +124,13 @@
                     Branding
                 </x-sidebar-link>
 
+                <x-sidebar-link href="{{ route('admin.month-locking') }}" :active="request()->routeIs('admin.month-locking')">
+                    <x-slot:icon>
+                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                    </x-slot:icon>
+                    Month Locking
+                </x-sidebar-link>
+
                 <x-sidebar-link href="{{ route('admin.audit-logs') }}" :active="request()->routeIs('admin.audit-logs')">
                     <x-slot:icon>
                         <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/></svg>
@@ -163,6 +170,52 @@
 
                 <!-- Right side -->
                 <div class="flex items-center gap-4">
+                    {{-- Notification Bell --}}
+                    <div x-data="{ open: false }" class="relative">
+                        <button @click="open = !open" class="relative text-gray-400 transition hover:text-gray-600" data-tippy-content="Notifications">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                            @php
+                                $unreadCount = \App\Models\AuditLog::where('created_at', '>=', now()->subDay())->count();
+                            @endphp
+                            @if($unreadCount > 0)
+                            <span class="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                                {{ $unreadCount > 9 ? '9+' : $unreadCount }}
+                            </span>
+                            @endif
+                        </button>
+
+                        <div x-show="open" @click.outside="open = false" x-transition
+                             class="absolute right-0 top-10 z-50 w-80 rounded-xl bg-white shadow-lg ring-1 ring-gray-200">
+                            <div class="border-b border-gray-200 px-4 py-3">
+                                <p class="text-sm font-semibold text-gray-900">Recent Activity</p>
+                            </div>
+                            <div class="max-h-72 overflow-y-auto">
+                                @php
+                                    $notifications = \App\Models\AuditLog::with('user')
+                                        ->orderByDesc('created_at')
+                                        ->limit(8)
+                                        ->get();
+                                @endphp
+                                @forelse($notifications as $n)
+                                <div class="border-b border-gray-50 px-4 py-2.5 transition hover:bg-gray-50">
+                                    <p class="text-xs text-gray-700">
+                                        <span class="font-medium">{{ $n->user?->name ?? 'System' }}</span>
+                                        {{ str_replace('_', ' ', $n->action) }}
+                                    </p>
+                                    <p class="text-[10px] text-gray-400">{{ $n->created_at->diffForHumans() }}</p>
+                                </div>
+                                @empty
+                                <div class="px-4 py-6 text-center text-xs text-gray-400">No activity yet</div>
+                                @endforelse
+                            </div>
+                            @if(auth()->user()->isAdmin())
+                            <a href="{{ route('admin.audit-logs') }}" class="block border-t border-gray-200 px-4 py-2.5 text-center text-xs font-medium text-brand-600 hover:bg-gray-50">
+                                View all audit logs
+                            </a>
+                            @endif
+                        </div>
+                    </div>
+
                     <a href="{{ route('password.change') }}"
                        class="text-sm text-gray-400 transition hover:text-gray-600"
                        data-tippy-content="Change your password">

@@ -7,6 +7,7 @@ use App\Models\AuditLog;
 use App\Models\CommissionPayout;
 use App\Models\CommissionSetting;
 use App\Models\Deal;
+use App\Models\MonthlySnapshot;
 use App\Models\User;
 use App\Services\CommissionCalculatorService;
 use Carbon\Carbon;
@@ -41,6 +42,10 @@ class DealLog extends Component
     public string $filterStatus = '';
     public string $filterRep = '';
 
+    // Batch selection
+    public array $selectedDeals = [];
+    public string $batchAction = '';
+
     public function mount(): void
     {
         $this->filterMonth = now()->format('Y-m');
@@ -50,7 +55,7 @@ class DealLog extends Component
     {
         return [
             'client_name' => 'required|min:2|max:255',
-            'sold_contract_value' => 'required|numeric|min:0.01',
+            'sold_contract_value' => 'required|numeric|gt:0',
             'estimated_gm_percent' => 'required|numeric|min:0|max:100',
             'deal_status' => 'required|in:' . implode(',', array_column(DealStatus::cases(), 'value')),
             'month' => 'required|date_format:Y-m',
@@ -111,9 +116,28 @@ class DealLog extends Component
         $this->showModal = true;
     }
 
+    protected function isMonthLocked(string $month): bool
+    {
+        return MonthlySnapshot::isMonthLocked($month . '-01');
+    }
+
     public function save(): void
     {
         $this->validate();
+
+        // Closed Won requires both dates
+        if ($this->deal_status === 'closed_won') {
+            if (!$this->appointment_date || !$this->contract_signed_date) {
+                $this->dispatch('toast', type: 'error', message: 'Closed Won requires both Appointment Date and Contract Signed Date.');
+                return;
+            }
+        }
+
+        // Check if month is locked
+        if ($this->isMonthLocked($this->month)) {
+            $this->dispatch('toast', type: 'error', message: 'This month is locked. Deals cannot be created or modified.');
+            return;
+        }
 
         // Sales reps can only create deals for themselves
         $userId = auth()->user()->isSalesRep()
@@ -192,6 +216,11 @@ class DealLog extends Component
         $deal = $this->findDeal($id);
         if (!$deal) return;
 
+        if (MonthlySnapshot::isMonthLocked($deal->month)) {
+            $this->dispatch('toast', type: 'error', message: 'This month is locked. Deals cannot be deleted.');
+            return;
+        }
+
         AuditLog::record('deal_deleted', $deal, $deal->toArray());
 
         // Remove associated commission payout
@@ -206,10 +235,23 @@ class DealLog extends Component
         $deal = $this->findDeal($id);
         if (!$deal) return;
 
+        if (MonthlySnapshot::isMonthLocked($deal->month)) {
+            $this->dispatch('toast', type: 'error', message: 'This month is locked. Deal status cannot be changed.');
+            return;
+        }
+
         $newStatus = DealStatus::from($status);
         $oldStatus = $deal->deal_status;
 
         if ($oldStatus === $newStatus) return;
+
+        // Closed Won requires both dates
+        if ($newStatus === DealStatus::ClosedWon) {
+            if (!$deal->appointment_date || !$deal->contract_signed_date) {
+                $this->dispatch('toast', type: 'error', message: 'Cannot mark as Closed Won — Appointment Date and Contract Signed Date are both required. Edit the deal first.');
+                return;
+            }
+        }
 
         $oldValues = ['deal_status' => $oldStatus->value];
         $deal->update(['deal_status' => $newStatus]);
@@ -224,6 +266,46 @@ class DealLog extends Component
         }
 
         $this->dispatch('toast', type: 'success', message: "Status changed to {$newStatus->label()}.");
+    }
+
+    public function batchUpdateStatus(): void
+    {
+        if (empty($this->selectedDeals) || !$this->batchAction) {
+            $this->dispatch('toast', type: 'error', message: 'Select deals and an action first.');
+            return;
+        }
+
+        // Block Closed Won in batch — too risky for batch
+        if ($this->batchAction === 'closed_won') {
+            $this->dispatch('toast', type: 'error', message: 'Closed Won cannot be applied in batch. Change each deal individually.');
+            return;
+        }
+
+        $count = 0;
+        foreach ($this->selectedDeals as $dealId) {
+            $deal = $this->findDeal((int) $dealId);
+            if (!$deal) continue;
+
+            if (MonthlySnapshot::isMonthLocked($deal->month)) continue;
+
+            $newStatus = DealStatus::from($this->batchAction);
+            $oldStatus = $deal->deal_status;
+            if ($oldStatus === $newStatus) continue;
+
+            $deal->update(['deal_status' => $newStatus]);
+            AuditLog::record('deal_status_changed', $deal, ['deal_status' => $oldStatus->value], ['deal_status' => $newStatus->value]);
+
+            // Remove commission if moving away from Closed Won
+            if ($oldStatus === DealStatus::ClosedWon && $newStatus !== DealStatus::ClosedWon) {
+                $deal->commissionPayout?->delete();
+            }
+
+            $count++;
+        }
+
+        $this->selectedDeals = [];
+        $this->batchAction = '';
+        $this->dispatch('toast', type: 'success', message: "{$count} deal(s) updated.");
     }
 
     protected function calculateCommissionPayout(Deal $deal): void
@@ -259,13 +341,23 @@ class DealLog extends Component
             return null;
         }
 
-        return Carbon::parse($this->appointment_date)
-            ->diffInDays(Carbon::parse($this->contract_signed_date));
+        $appt = Carbon::parse($this->appointment_date);
+        $signed = Carbon::parse($this->contract_signed_date);
+
+        // If signed before appointment, return null (invalid data)
+        if ($signed->lt($appt)) {
+            return null;
+        }
+
+        return $appt->diffInDays($signed);
     }
 
     protected function detectFastClose(?int $daysToClose): bool
     {
         if ($daysToClose === null) return false;
+
+        // Fast close only applies to Closed Won deals
+        if ($this->deal_status !== 'closed_won') return false;
 
         $fastCloseDays = (int) CommissionSetting::getValue('fast_close_days', 3);
         return $daysToClose <= $fastCloseDays;

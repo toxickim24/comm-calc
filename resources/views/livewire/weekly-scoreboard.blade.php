@@ -112,30 +112,54 @@
                         </td>
                         @endif
 
-                        <td class="px-4 py-3 text-right text-sm font-medium text-gray-900">{{ $score->appointments }}</td>
-                        <td class="px-4 py-3 text-right text-sm text-gray-700">{{ $score->quotes_sent }}</td>
-                        <td class="px-4 py-3 text-right">
-                            <span class="text-sm font-semibold {{ $score->deals_closed > 0 ? 'text-green-600' : 'text-gray-400' }}">
-                                {{ $score->deals_closed }}
-                            </span>
+                        @php $canEdit = !auth()->user()->isSalesRep(); @endphp
+
+                        @foreach([
+                            'appointments' => ['value' => $score->appointments, 'class' => 'font-medium text-gray-900'],
+                            'quotes_sent' => ['value' => $score->quotes_sent, 'class' => 'text-gray-700'],
+                            'deals_closed' => ['value' => $score->deals_closed, 'class' => ($score->deals_closed > 0 ? 'font-semibold text-green-600' : 'text-gray-400')],
+                            'close_rate' => ['value' => number_format($score->close_rate, 1) . '%', 'class' => 'font-medium ' . ($score->close_rate >= 30 ? 'text-green-600' : ($score->close_rate >= 20 ? 'text-brand-600' : ($score->close_rate > 0 ? 'text-gray-700' : 'text-gray-400')))],
+                            'avg_days_to_close' => ['value' => $score->avg_days_to_close > 0 ? number_format($score->avg_days_to_close, 1) : '--', 'class' => 'text-gray-700'],
+                        ] as $field => $meta)
+                        <td class="px-4 py-3 text-right text-sm">
+                            @if($canEdit && $editingScoreId === $score->id && $editField === $field)
+                                <input wire:model="editValue"
+                                       wire:keydown.enter="saveEdit"
+                                       wire:keydown.escape="cancelEdit"
+                                       type="number" step="{{ in_array($field, ['close_rate', 'avg_days_to_close']) ? '0.1' : '1' }}"
+                                       class="w-16 rounded border border-brand-400 px-2 py-1 text-right text-sm focus:border-brand-500 focus:ring-1 focus:ring-brand-500 focus:outline-none"
+                                       autofocus>
+                            @else
+                                <span class="{{ $meta['class'] }} {{ $canEdit ? 'cursor-pointer rounded px-1 py-0.5 hover:bg-gray-100' : '' }}"
+                                      @if($canEdit) wire:click="startEdit({{ $score->id }}, '{{ $field }}')" data-tippy-content="Click to edit" @endif>
+                                    {{ $meta['value'] }}
+                                </span>
+                            @endif
                         </td>
-                        <td class="px-4 py-3 text-right">
-                            @php
-                                $rateColor = $score->close_rate >= 30 ? 'text-green-600' : ($score->close_rate >= 20 ? 'text-brand-600' : ($score->close_rate > 0 ? 'text-gray-700' : 'text-gray-400'));
-                            @endphp
-                            <span class="text-sm font-medium {{ $rateColor }}">{{ number_format($score->close_rate, 1) }}%</span>
-                        </td>
-                        <td class="px-4 py-3 text-right text-sm text-gray-700">
-                            {{ $score->avg_days_to_close > 0 ? number_format($score->avg_days_to_close, 1) : '--' }}
-                        </td>
+                        @endforeach
+
                         <td class="px-4 py-3 text-right text-sm">
                             @if($score->fast_closes > 0)
-                                <span class="inline-flex items-center gap-1 font-medium text-amber-600">
-                                    <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
-                                    {{ $score->fast_closes }}
+                                <span class="inline-flex items-center gap-1 font-medium text-amber-600 {{ $canEdit ? 'cursor-pointer rounded px-1 py-0.5 hover:bg-gray-100' : '' }}"
+                                      @if($canEdit) wire:click="startEdit({{ $score->id }}, 'fast_closes')" data-tippy-content="Click to edit" @endif>
+                                    @if($editingScoreId === $score->id && $editField === 'fast_closes')
+                                        <input wire:model="editValue" wire:keydown.enter="saveEdit" wire:keydown.escape="cancelEdit"
+                                               type="number" step="1" class="w-12 rounded border border-brand-400 px-2 py-1 text-right text-sm focus:outline-none" autofocus>
+                                    @else
+                                        <svg class="h-3.5 w-3.5" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
+                                        {{ $score->fast_closes }}
+                                    @endif
                                 </span>
                             @else
-                                <span class="text-gray-400">0</span>
+                                <span class="{{ $canEdit ? 'cursor-pointer rounded px-1 py-0.5 text-gray-400 hover:bg-gray-100' : 'text-gray-400' }}"
+                                      @if($canEdit) wire:click="startEdit({{ $score->id }}, 'fast_closes')" data-tippy-content="Click to edit" @endif>
+                                    @if($editingScoreId === $score->id && $editField === 'fast_closes')
+                                        <input wire:model="editValue" wire:keydown.enter="saveEdit" wire:keydown.escape="cancelEdit"
+                                               type="number" step="1" class="w-12 rounded border border-brand-400 px-2 py-1 text-right text-sm focus:outline-none" autofocus>
+                                    @else
+                                        0
+                                    @endif
+                                </span>
                             @endif
                         </td>
                     </tr>

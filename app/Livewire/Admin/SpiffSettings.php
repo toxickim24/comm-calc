@@ -21,11 +21,21 @@ class SpiffSettings extends Component
             ->keyBy('key')
             ->map(fn ($s) => [
                 'id' => $s->id,
-                'value' => $s->value,
+                'value' => $this->formatForDisplay($s->key, (float) $s->value),
                 'label' => $s->label,
                 'description' => $s->description,
             ])
             ->toArray();
+    }
+
+    protected function formatForDisplay(string $key, float $value): string
+    {
+        // All SPIFF monetary and count values are whole numbers
+        if ($value == (int) $value) {
+            return (string) (int) $value;
+        }
+
+        return rtrim(rtrim(number_format($value, 4), '0'), '.');
     }
 
     public function save(): void

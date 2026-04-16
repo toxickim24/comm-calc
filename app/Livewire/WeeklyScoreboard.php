@@ -3,6 +3,7 @@
 namespace App\Livewire;
 
 use App\Enums\DealStatus;
+use App\Models\AuditLog;
 use App\Models\CommissionSetting;
 use App\Models\Deal;
 use App\Models\User;
@@ -13,6 +14,10 @@ use Livewire\Component;
 
 class WeeklyScoreboard extends Component
 {
+    // Inline editing
+    public ?int $editingScoreId = null;
+    public string $editField = '';
+    public string $editValue = '';
     public string $weekStart = '';
     public string $sortBy = 'deals_closed';
     public string $sortDir = 'desc';
@@ -60,32 +65,18 @@ class WeeklyScoreboard extends Component
         $reps = User::where('role', 'sales_rep')->get();
 
         foreach ($reps as $rep) {
-            $deals = Deal::where('user_id', $rep->id)
-                ->whereBetween('created_at', [$weekStart->startOfDay(), $weekEnd->endOfDay()])
-                ->get();
-
-            $appointments = $deals->whereNotNull('appointment_date')
-                ->where('appointment_date', '>=', $weekStart)
-                ->where('appointment_date', '<=', $weekEnd)
-                ->count();
-
-            // Count deals where appointment_date is in this week as appointments
-            // But also count deals with status appointment_set or beyond
+            // Appointments: deals with appointment_date in this week
             $appointmentDeals = Deal::where('user_id', $rep->id)
                 ->whereBetween('appointment_date', [$weekStart, $weekEnd])
                 ->count();
 
+            // Quotes: deals with status QuoteSent (or beyond) that had appointment this week
             $quotesSent = Deal::where('user_id', $rep->id)
-                ->where('deal_status', DealStatus::QuoteSent)
-                ->whereBetween('created_at', [$weekStart->startOfDay(), $weekEnd->endOfDay()])
+                ->whereIn('deal_status', [DealStatus::QuoteSent, DealStatus::ClosedWon, DealStatus::ClosedLost])
+                ->whereBetween('appointment_date', [$weekStart, $weekEnd])
                 ->count();
 
-            // Also count closed deals that went through quote stage
-            $quotesSent += Deal::where('user_id', $rep->id)
-                ->whereIn('deal_status', [DealStatus::ClosedWon, DealStatus::ClosedLost])
-                ->whereBetween('contract_signed_date', [$weekStart, $weekEnd])
-                ->count();
-
+            // Closed Won deals with contract signed this week
             $dealsClosed = Deal::where('user_id', $rep->id)
                 ->where('deal_status', DealStatus::ClosedWon)
                 ->whereBetween('contract_signed_date', [$weekStart, $weekEnd])
@@ -125,6 +116,54 @@ class WeeklyScoreboard extends Component
         }
 
         $this->dispatch('toast', type: 'success', message: 'Scoreboard recalculated for this week.');
+    }
+
+    public function startEdit(int $scoreId, string $field): void
+    {
+        $user = auth()->user();
+        if ($user->isSalesRep()) return;
+
+        $score = WeeklyScore::find($scoreId);
+        if (!$score) return;
+
+        $this->editingScoreId = $scoreId;
+        $this->editField = $field;
+        $this->editValue = (string) $score->{$field};
+    }
+
+    public function saveEdit(): void
+    {
+        if (!$this->editingScoreId || !$this->editField) return;
+
+        $score = WeeklyScore::find($this->editingScoreId);
+        if (!$score) return;
+
+        $allowed = ['appointments', 'quotes_sent', 'deals_closed', 'close_rate', 'avg_days_to_close', 'fast_closes'];
+        if (!in_array($this->editField, $allowed)) return;
+
+        $oldValue = $score->{$this->editField};
+        $newValue = is_numeric($this->editValue) ? (float) $this->editValue : 0;
+
+        if ((float) $oldValue !== $newValue) {
+            $score->update([$this->editField => $newValue]);
+            AuditLog::record('weekly_score_edited', $score, [
+                $this->editField => $oldValue,
+            ], [
+                $this->editField => $newValue,
+                'rep' => $score->user->name,
+                'week' => $score->week_start->format('M d'),
+            ]);
+        }
+
+        $this->cancelEdit();
+        $this->dispatch('toast', type: 'success', message: 'Score updated.');
+    }
+
+    public function cancelEdit(): void
+    {
+        $this->editingScoreId = null;
+        $this->editField = '';
+        $this->editValue = '';
     }
 
     public function render()

@@ -21,11 +21,29 @@ class CommissionSettings extends Component
             ->keyBy('key')
             ->map(fn ($s) => [
                 'id' => $s->id,
-                'value' => $s->value,
+                'value' => $this->formatForDisplay($s->key, (float) $s->value),
                 'label' => $s->label,
                 'description' => $s->description,
             ])
             ->toArray();
+    }
+
+    protected function formatForDisplay(string $key, float $value): string
+    {
+        // Currency fields: whole dollars
+        if (in_array($key, ['floor_min_amount', 'fast_close_spiff'])) {
+            return (string) (int) $value;
+        }
+
+        // Whole-number percentages and counts
+        if (in_array($key, ['min_gm_percent', 'target_gm_percent', 'fast_close_days',
+            'tier_35_1_37_9_rate', 'tier_38_40_9_rate', 'tier_41_43_9_rate',
+            'tier_44_46_9_rate', 'tier_47_rate'])) {
+            return $value == (int) $value ? (string) (int) $value : rtrim(rtrim(number_format($value, 4), '0'), '.');
+        }
+
+        // Decimal values (floor_percent 0.5, surplus_multiplier 0.5): strip trailing zeros
+        return rtrim(rtrim(number_format($value, 4), '0'), '.');
     }
 
     public function save(): void

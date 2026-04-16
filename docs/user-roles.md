@@ -12,16 +12,20 @@
 
 | Feature / Page | Admin | Manager | Sales Rep |
 |----------------|:-----:|:-------:|:---------:|
-| Dashboard | x | x | x |
-| Commission Calculator | x | x | x |
+| Dashboard (with YTD summary) | x | x | x |
+| Commission Calculator (with comparison) | x | x | x |
 | Deal Log (own deals) | x | x | x |
-| Deal Log (all reps) | x | x | - |
-| Weekly Scoreboard | x | x | x |
+| Deal Log (all reps + batch updates) | x | x | - |
+| Weekly Scoreboard (view) | x | x | x |
+| Weekly Scoreboard (edit scores) | x | x | - |
 | Monthly SPIFF | x | x | - |
+| Notification Bell | x | x | x |
+| Per-Rep Commission PDF | x | x | own only |
 | Admin: User Management | x | - | - |
 | Admin: Commission Settings | x | - | - |
 | Admin: SPIFF Settings | x | - | - |
 | Admin: Branding Settings | x | - | - |
+| Admin: Month Locking | x | - | - |
 | Admin: Audit Logs | x | - | - |
 
 ## Route Protection

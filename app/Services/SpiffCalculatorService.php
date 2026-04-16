@@ -76,7 +76,9 @@ class SpiffCalculatorService
         $priorClosed = $priorDeals->where('deal_status', DealStatus::ClosedWon)->count();
         $priorCloseRate = $priorAppts > 0 ? round(($priorClosed / $priorAppts) * 100, 2) : 0;
 
-        $improvementPoints = $closeRate - $priorCloseRate;
+        // If no prior month deals exist, improvement is 0 (not current rate minus 0)
+        $hasPriorData = $priorDeals->isNotEmpty();
+        $improvementPoints = $hasPriorData ? ($closeRate - $priorCloseRate) : 0;
 
         // Calculate bonuses
         $improvementBonus = $this->calcImprovementBonus($improvementPoints, $appointments);
@@ -120,8 +122,13 @@ class SpiffCalculatorService
         $target20Bonus = (float) ($this->settings['target_20_bonus'] ?? 500);
         $minAppts = (int) ($this->settings['target_min_appts'] ?? 12);
 
-        // 30%+ takes priority (replaces 20% bonus)
-        if ($closeRate >= 30 && $appointments >= $minAppts) {
+        // Both tiers require minimum 12 appointments
+        if ($appointments < $minAppts) {
+            return 0;
+        }
+
+        // 30%+ takes priority (replaces 20% bonus, not stacked)
+        if ($closeRate >= 30) {
             return $target30Bonus;
         }
 

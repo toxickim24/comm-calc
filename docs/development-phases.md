@@ -45,9 +45,9 @@ Status key: [x] = complete, [ ] = not started
   - [x] Gross margin tier lookup
   - [x] Base commission calculation
   - [x] Surplus bonus calculation (above target GM)
-  - [x] Fast close bonus ($250 for deals closed in < 3 days)
-  - [x] Floor protection ($750 minimum at 35% GM)
-- [x] Real-time commission calculator page (input contract value + GM %, see breakdown)
+  - [x] Fast close bonus ($250 for deals closed in <= 3 days, auto-calculated from deal dates only)
+  - [x] Floor protection (MAX($750, 0.5% of contract value) at exactly 35% GM)
+- [x] Real-time commission calculator page (input contract value + GM %, see breakdown — no manual fast close toggle)
 - [x] Commission payout record creation (linked to deals)
 - [x] Settings snapshot capture on payout
 
@@ -71,9 +71,9 @@ Status key: [x] = complete, [ ] = not started
 ---
 
 ## Phase 4: Weekly Scoreboard
-> Weekly performance metrics and rep comparisons.
+> Auto-calculated weekly performance metrics with admin/manager recalculate and manual per-field editing support.
 
-- [x] Weekly score data entry / auto-calculation
+- [x] Weekly score auto-calculation from deal data (with Recalculate button for admins/managers)
   - [x] Appointments count
   - [x] Quotes sent
   - [x] Deals closed
@@ -106,23 +106,49 @@ Status key: [x] = complete, [ ] = not started
 ## Phase 6: Dashboard Enhancements & Reporting
 > Charts, leaderboards, activity feeds, and export capabilities.
 
-- [ ] Dashboard charts (commission trends, deal pipeline, close rates)
-- [ ] Leaderboard (top reps by commission, close rate, deals)
-- [ ] Activity feed (recent deals, payouts, changes)
-- [ ] Monthly summary reports
-- [ ] PDF export (commission statements, SPIFF reports)
-- [ ] Excel export (deal logs, payout history)
-- [ ] Month-end locking workflow (freeze snapshots)
+- [x] Dashboard charts (commission trends, deal pipeline, close rates)
+- [x] Leaderboard (top reps by commission, close rate, deals)
+- [x] Activity feed (recent deals, payouts, changes)
+- [x] Monthly summary reports
+- [x] PDF export (commission statements, SPIFF reports)
+- [x] Excel export (deal logs, payout history)
+- [x] Month-end locking workflow (freeze snapshots)
 
 ---
 
 ## Phase 7: Polish & Production Readiness
 > Final hardening, testing, and deployment prep.
 
-- [ ] Comprehensive test suite (unit + feature tests)
-- [ ] Input validation hardening
-- [ ] Error handling and user-friendly error pages
-- [ ] Performance optimization (eager loading, caching)
-- [ ] Production environment configuration
-- [ ] Deployment documentation
-- [ ] User guide / help documentation
+- [x] Comprehensive test suite (unit + feature tests)
+- [x] Input validation hardening
+- [x] Error handling and user-friendly error pages
+- [x] Performance optimization (eager loading, caching)
+- [x] Production environment configuration
+- [x] Deployment documentation
+- [x] User guide / help documentation
+
+---
+
+## Phase 8: Safeguards, Reporting & UX Hardening
+> High-impact safety improvements and reporting features. Does NOT modify core commission/SPIFF calculation logic.
+
+### Deal Entry Safeguards
+- [x] Closed Won confirmation modal (SweetAlert2 confirmation before status change triggers commission)
+- [x] Required dates for Closed Won (appointment_date + contract_signed_date mandatory before CW save/status change)
+- [x] Contract value > 0 form validation (gt:0 rule + service-layer protection)
+
+### Month-End Locking Safeguards
+- [x] Pre-lock month checklist (show open deals, missing dates, uncalculated SPIFFs before locking)
+- [x] Admin acknowledgement required before final lock
+
+### Reporting & Insights
+- [x] Per-rep commission statement PDF (single rep filtered, for payroll distribution)
+- [x] Year-to-date commission + SPIFF summary (per rep, on dashboard)
+
+### UX Improvements
+- [x] Mobile card view for deal log (stacked cards below lg breakpoint)
+- [x] Deal comparison calculator (side-by-side "what if" scenarios)
+- [x] GM% color coding in deal log table (red < 35, amber 35-40, green 41+, bold 47+)
+- [x] Batch status updates for managers (checkbox select + bulk action, CW blocked in batch)
+- [x] In-app notification bell (recent audit events dropdown in top bar)
+- [x] Weekly scoreboard manual per-field editing (click-to-edit with Enter/Escape, audit logged)

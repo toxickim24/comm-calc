@@ -36,8 +36,8 @@ class CommissionCalculatorService
         $surplusMultiplier = (float) ($this->settings['surplus_multiplier'] ?? 0.5);
         $fastCloseSpiff = (float) ($this->settings['fast_close_spiff'] ?? 250.0);
 
-        // Below minimum GM = no commission
-        if ($gmPercent < $minGm) {
+        // Below minimum GM or zero contract = no commission
+        if ($gmPercent < $minGm || $contractValue <= 0) {
             return $this->buildResult($contractValue, $gmPercent, 'Below Floor', 0, 0, 0, 0, 0, $isFastClose);
         }
 

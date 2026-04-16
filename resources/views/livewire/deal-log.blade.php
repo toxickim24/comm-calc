@@ -4,11 +4,19 @@
             <h2 class="text-xl font-bold text-gray-900">Deal Log</h2>
             <p class="text-sm text-gray-500">Manage your sales deals and pipeline</p>
         </div>
-        <button wire:click="create"
-                class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
-            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
-            New Deal
-        </button>
+        <div class="flex items-center gap-2">
+            <a href="{{ route('export.deal-log', ['month' => $filterMonth ?: now()->format('Y-m')]) }}"
+               class="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50"
+               data-tippy-content="Export to Excel">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>
+                Excel
+            </a>
+            <button wire:click="create"
+                    class="inline-flex items-center gap-2 rounded-lg bg-brand-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-brand-700">
+                <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/></svg>
+                New Deal
+            </button>
+        </div>
     </div>
 
     {{-- Filters --}}
@@ -40,12 +48,110 @@
         @endif
     </div>
 
-    {{-- Deals Table --}}
-    <div class="overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
+    {{-- Batch Actions (admin/manager only, when deals selected) --}}
+    @if($salesReps->isNotEmpty() && count($selectedDeals) > 0)
+    <div class="mb-4 flex items-center gap-3 rounded-lg bg-brand-50 px-4 py-3 ring-1 ring-brand-200">
+        <span class="text-sm font-medium text-brand-700">{{ count($selectedDeals) }} {{ Str::plural('deal', count($selectedDeals)) }} selected</span>
+        <select wire:model="batchAction" class="rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:border-brand-500 focus:ring-2 focus:ring-brand-500/20 focus:outline-none">
+            <option value="">Change status to...</option>
+            @foreach($statuses as $status)
+                @if($status->value !== 'closed_won')
+                <option value="{{ $status->value }}">{{ $status->label() }}</option>
+                @endif
+            @endforeach
+        </select>
+        <button wire:click="batchUpdateStatus"
+                x-on:click="if(!confirm('Update {{ count($selectedDeals) }} deals?')) return false"
+                class="rounded-lg bg-brand-600 px-3 py-1.5 text-sm font-semibold text-white shadow-sm hover:bg-brand-700">
+            Apply
+        </button>
+        <button wire:click="$set('selectedDeals', [])" class="text-sm text-gray-500 hover:text-gray-700">Clear</button>
+    </div>
+    @endif
+
+    {{-- Mobile Card View (visible below lg) --}}
+    <div class="space-y-3 lg:hidden">
+        @forelse($deals as $deal)
+        @php
+            $statusColors = [
+                'gray' => 'bg-gray-100 text-gray-800',
+                'blue' => 'bg-blue-100 text-blue-800',
+                'yellow' => 'bg-yellow-100 text-yellow-800',
+                'green' => 'bg-green-100 text-green-800',
+                'red' => 'bg-red-100 text-red-800',
+            ];
+            $mColorClass = $statusColors[$deal->deal_status->color()] ?? 'bg-gray-100 text-gray-800';
+            $mGm = (float) $deal->estimated_gm_percent;
+            $mGmColor = $mGm < 35 ? 'text-red-600' : ($mGm < 41 ? 'text-amber-600' : ($mGm >= 47 ? 'text-brand-700 font-semibold' : 'text-green-600'));
+        @endphp
+        <div class="rounded-xl bg-white p-4 shadow-sm ring-1 ring-gray-200" wire:key="card-{{ $deal->id }}">
+            <div class="flex items-start justify-between">
+                <div>
+                    <p class="text-sm font-semibold text-gray-900">{{ $deal->client_name }}</p>
+                    <p class="text-xs text-gray-500">{{ $deal->month->format('M Y') }}@if($salesReps->isNotEmpty()) — {{ $deal->user->name }}@endif</p>
+                </div>
+                <span class="inline-flex rounded-full px-2 py-0.5 text-xs font-medium {{ $mColorClass }}">{{ $deal->deal_status->label() }}</span>
+            </div>
+            <div class="mt-3 grid grid-cols-3 gap-3 text-center">
+                <div>
+                    <p class="text-lg font-bold text-gray-900">${{ number_format($deal->sold_contract_value, 0) }}</p>
+                    <p class="text-xs text-gray-500">Contract</p>
+                </div>
+                <div>
+                    <p class="text-lg font-bold {{ $mGmColor }}">{{ number_format($mGm, 1) }}%</p>
+                    <p class="text-xs text-gray-500">GM</p>
+                </div>
+                <div>
+                    @if($deal->commissionPayout)
+                        <p class="text-lg font-bold text-green-600">${{ number_format($deal->commissionPayout->total_payout, 0) }}</p>
+                    @else
+                        <p class="text-lg font-bold text-gray-300">--</p>
+                    @endif
+                    <p class="text-xs text-gray-500">Commission</p>
+                </div>
+            </div>
+            <div class="mt-3 flex items-center justify-between border-t border-gray-100 pt-3">
+                <div class="flex items-center gap-2 text-xs text-gray-500">
+                    @if($deal->days_to_close !== null)
+                        {{ $deal->days_to_close }} days
+                        @if($deal->is_fast_close)
+                            <svg class="h-3.5 w-3.5 text-amber-500" fill="currentColor" viewBox="0 0 20 20"><path d="M11.3 1.046A1 1 0 0112 2v5h4a1 1 0 01.82 1.573l-7 10A1 1 0 018 18v-5H4a1 1 0 01-.82-1.573l7-10a1 1 0 011.12-.38z"/></svg>
+                        @endif
+                    @else
+                        No close date
+                    @endif
+                </div>
+                <div class="flex items-center gap-1">
+                    <button wire:click="edit({{ $deal->id }})" class="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-brand-600">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </button>
+                    <button x-on:click="confirmAction({ title: 'Delete Deal?', text: 'Remove {{ addslashes($deal->client_name) }}.' }).then(r => { if(r.isConfirmed) $wire.delete({{ $deal->id }}) })"
+                            class="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-red-600">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/></svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+        @empty
+        <div class="rounded-xl bg-white p-8 text-center text-sm text-gray-500 shadow-sm ring-1 ring-gray-200">
+            No deals found. Click "New Deal" to add one.
+        </div>
+        @endforelse
+
+        @if($deals->hasPages())
+        <div class="mt-3">{{ $deals->links() }}</div>
+        @endif
+    </div>
+
+    {{-- Deals Table (hidden on mobile, visible lg+) --}}
+    <div class="hidden lg:block overflow-hidden rounded-xl bg-white shadow-sm ring-1 ring-gray-200">
         <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200">
                 <thead class="bg-gray-50">
                     <tr>
+                        @if($salesReps->isNotEmpty())
+                        <th class="w-10 px-2 py-3"></th>
+                        @endif
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Client</th>
                         @if($salesReps->isNotEmpty())
                         <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-500">Rep</th>
@@ -61,6 +167,14 @@
                 <tbody class="divide-y divide-gray-100">
                     @forelse($deals as $deal)
                     <tr class="transition hover:bg-gray-50" wire:key="deal-{{ $deal->id }}">
+                        {{-- Checkbox (admin/manager) --}}
+                        @if($salesReps->isNotEmpty())
+                        <td class="w-10 px-2 py-3">
+                            <input type="checkbox" wire:model.live="selectedDeals" value="{{ $deal->id }}"
+                                   class="h-4 w-4 rounded border-gray-300 text-brand-600 focus:ring-brand-500">
+                        </td>
+                        @endif
+
                         {{-- Client --}}
                         <td class="px-4 py-3">
                             <p class="text-sm font-medium text-gray-900">{{ $deal->client_name }}</p>
@@ -84,7 +198,23 @@
                                 ];
                                 $colorClass = $statusColors[$deal->deal_status->color()] ?? 'bg-gray-100 text-gray-800';
                             @endphp
-                            <select wire:change="updateStatus({{ $deal->id }}, $event.target.value)"
+                            <select x-on:change="
+                                        if ($event.target.value === 'closed_won') {
+                                            confirmAction({
+                                                title: 'Mark as Closed Won?',
+                                                text: 'This will trigger a commission payout calculation. This action affects real payouts.',
+                                                confirmButtonText: 'Yes, Close Won'
+                                            }).then(result => {
+                                                if (result.isConfirmed) {
+                                                    $wire.updateStatus({{ $deal->id }}, $event.target.value);
+                                                } else {
+                                                    $event.target.value = '{{ $deal->deal_status->value }}';
+                                                }
+                                            });
+                                        } else {
+                                            $wire.updateStatus({{ $deal->id }}, $event.target.value);
+                                        }
+                                    "
                                     class="rounded-full border-0 px-2.5 py-0.5 text-xs font-medium {{ $colorClass }} cursor-pointer focus:ring-2 focus:ring-brand-500/20 focus:outline-none">
                                 @foreach($statuses as $status)
                                     <option value="{{ $status->value }}" @selected($deal->deal_status === $status)>
@@ -99,9 +229,13 @@
                             ${{ number_format($deal->sold_contract_value, 2) }}
                         </td>
 
-                        {{-- GM% --}}
-                        <td class="px-4 py-3 text-right text-sm text-gray-700">
-                            {{ number_format($deal->estimated_gm_percent, 1) }}%
+                        {{-- GM% with color coding --}}
+                        <td class="px-4 py-3 text-right text-sm">
+                            @php
+                                $gm = (float) $deal->estimated_gm_percent;
+                                $gmColor = $gm < 35 ? 'text-red-600' : ($gm < 41 ? 'text-amber-600' : ($gm >= 47 ? 'text-brand-700 font-semibold' : 'text-green-600'));
+                            @endphp
+                            <span class="{{ $gmColor }}">{{ number_format($gm, 1) }}%</span>
                         </td>
 
                         {{-- Commission --}}
