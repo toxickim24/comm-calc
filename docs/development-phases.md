@@ -73,33 +73,33 @@ Status key: [x] = complete, [ ] = not started
 ## Phase 4: Weekly Scoreboard
 > Weekly performance metrics and rep comparisons.
 
-- [ ] Weekly score data entry / auto-calculation
-  - [ ] Appointments count
-  - [ ] Quotes sent
-  - [ ] Deals closed
-  - [ ] Close rate calculation
-  - [ ] Average days to close
-  - [ ] Fast close count
-- [ ] Scoreboard display (table view, sortable)
-- [ ] Week selector (date range picker)
-- [ ] Rep comparison view (manager/admin)
-- [ ] Personal stats view (sales rep)
+- [x] Weekly score data entry / auto-calculation
+  - [x] Appointments count
+  - [x] Quotes sent
+  - [x] Deals closed
+  - [x] Close rate calculation
+  - [x] Average days to close
+  - [x] Fast close count
+- [x] Scoreboard display (table view, sortable)
+- [x] Week selector (date range picker)
+- [x] Rep comparison view (manager/admin)
+- [x] Personal stats view (sales rep)
 
 ---
 
 ## Phase 5: Monthly SPIFF Bonuses
 > Monthly incentive bonus calculations with admin overrides.
 
-- [ ] Admin: SPIFF Settings UI (edit thresholds and bonus amounts)
-- [ ] SPIFF calculation engine
-  - [ ] Close rate improvement bonus ($500 for 5+ point improvement, 10+ appointments)
-  - [ ] Target close rate bonus ($500 at 20%, $1000 at 30%+ with 12+ appointments)
-  - [ ] Fast close bonus ($250 per qualifying deal)
-  - [ ] Highest close rate bonus ($500, with tie-handling rules)
-- [ ] Monthly SPIFF payout page
-- [ ] Admin override capability (with notes)
-- [ ] SPIFF payout history
-- [ ] Settings snapshot on payout
+- [x] Admin: SPIFF Settings UI (edit thresholds and bonus amounts)
+- [x] SPIFF calculation engine
+  - [x] Close rate improvement bonus ($500 for 5+ point improvement, 10+ appointments)
+  - [x] Target close rate bonus ($500 at 20%, $1000 at 30%+ with 12+ appointments)
+  - [x] Fast close bonus ($250 per qualifying deal)
+  - [x] Highest close rate bonus ($500, with tie-handling rules)
+- [x] Monthly SPIFF payout page
+- [x] Admin override capability (with notes)
+- [x] SPIFF payout history
+- [x] Settings snapshot on payout
 
 ---
 
