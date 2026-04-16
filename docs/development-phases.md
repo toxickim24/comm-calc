@@ -56,17 +56,17 @@ Status key: [x] = complete, [ ] = not started
 ## Phase 3: Deal Management
 > Full deal pipeline CRUD with status tracking.
 
-- [ ] Deal Log page with CRUD operations
-  - [ ] Create deal (client name, contract value, GM %, dates, status)
-  - [ ] Edit deal
-  - [ ] Delete deal (soft delete)
-  - [ ] Status transitions (Lead -> Appointment Set -> Quote Sent -> Closed Won/Lost)
-- [ ] Deal filtering (by month, status, sales rep)
-- [ ] Deal search
-- [ ] Days-to-close auto-calculation
-- [ ] Fast close flag auto-detection (< 3 days)
-- [ ] Commission auto-calculation on Closed Won
-- [ ] Deal audit trail
+- [x] Deal Log page with CRUD operations
+  - [x] Create deal (client name, contract value, GM %, dates, status)
+  - [x] Edit deal
+  - [x] Delete deal (soft delete)
+  - [x] Status transitions (Lead -> Appointment Set -> Quote Sent -> Closed Won/Lost)
+- [x] Deal filtering (by month, status, sales rep)
+- [x] Deal search
+- [x] Days-to-close auto-calculation
+- [x] Fast close flag auto-detection (< 3 days)
+- [x] Commission auto-calculation on Closed Won
+- [x] Deal audit trail
 
 ---
 
